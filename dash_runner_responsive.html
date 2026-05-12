@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Dash Runner</title>
+<!-- Google AdSense -->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9143865157586788" crossorigin="anonymous"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #0a0018;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    touch-action: manipulation;
+  }
+
+  #adTop {
+    width: 100%;
+    max-width: 728px;
+    text-align: center;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  #gameWrapper {
+    position: relative;
+    flex-shrink: 0;
+    user-select: none;
+  }
+
+  #gameCanvas {
+    display: block;
+    border-radius: 12px;
+    border: 1px solid rgba(124,58,237,0.4);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  #adBottom {
+    width: 100%;
+    max-width: 728px;
+    text-align: center;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  .btn-primary {
+    padding: 10px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #7c3aed;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .btn-primary:hover { background: #6d28d9; }
+
+  .btn-outline {
+    padding: 10px 20px;
+    font-size: 15px;
+    font-weight: 600;
+    background: transparent;
+    color: #c4b5fd;
+    border: 1.5px solid #7c3aed;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .btn-gold {
+    padding: 9px 22px;
+    font-size: 14px;
+    font-weight: 600;
+    background: transparent;
+    color: #fbbf24;
+    border: 1.5px solid #fbbf24;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  .btn-ghost {
+    padding: 9px 18px;
+    font-size: 14px;
+    color: #a78bfa;
+    border: 1px solid #7c3aed;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+
+  #menuScreen {
+    background: linear-gradient(180deg, #1a0a3d 0%, #2d1b69 50%, #1a0a3d 100%);
+  }
+
+  #gameOverScreen {
+    background: rgba(10,0,30,0.88);
+    display: none;
+  }
+
+  #adScreen {
+    background: #0a0018;
+    display: none;
+  }
+
+  #skinShop {
+    background: rgba(10,0,30,0.96);
+    display: none;
+  }
+
+  #hud {
+    position: absolute;
+    top: 10px;
+    left: 14px;
+    right: 14px;
+    display: none;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: none;
+  }
+
+  #powerupHud {
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+    display: none;
+    align-items: center;
+    gap: 6px;
+    pointer-events: none;
+  }
+
+  .indicator {
+    display: none;
+    font-size: 12px;
+    background: rgba(0,0,0,0.5);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Top AdSense Banner -->
+<div id="adTop">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9143865157586788"
+       data-ad-slot="auto"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<div id="gameWrapper">
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Menu Screen -->
+  <div id="menuScreen" class="overlay">
+    <div id="menuTitle" style="font-weight:700;color:#fff;letter-spacing:2px;text-shadow:0 0 20px #a78bfa;">DASH RUNNER</div>
+    <div id="menuSub" style="color:#c4b5fd;margin:6px 0 20px;">Collect coins. Dodge obstacles. Go forever.</div>
+    <div id="skinPicker" style="display:flex;gap:10px;margin-bottom:18px;"></div>
+    <div style="display:flex;gap:12px;margin-bottom:10px;">
+      <button class="btn-primary" onclick="startGame()">Play</button>
+      <button class="btn-outline" onclick="showSkins()">Skins</button>
+    </div>
+    <div id="menuStats" style="color:#a78bfa;">Best: <span id="menuBest">0</span> &nbsp;|&nbsp; Coins: <span id="menuCoins">0</span></div>
+    <div style="margin-top:16px;background:#1e1e2e;border:1px dashed #7c3aed;border-radius:6px;padding:7px 24px;font-size:11px;color:#7c3aed;letter-spacing:1px;">[ BANNER AD SPACE ]</div>
+  </div>
+
+  <!-- Game Over Screen -->
+  <div id="gameOverScreen" class="overlay">
+    <div style="font-size:26px;font-weight:700;color:#fff;">Game Over</div>
+    <div style="font-size:14px;color:#c4b5fd;margin:6px 0 4px;">Score: <span id="finalScore">0</span></div>
+    <div style="font-size:13px;color:#a78bfa;margin-bottom:18px;">Best: <span id="finalBest">0</span></div>
+    <!-- Interstitial AdSense in Game Over -->
+    <div style="margin-bottom:14px;text-align:center;">
+      <ins class="adsbygoogle"
+           style="display:inline-block;width:300px;height:100px"
+           data-ad-client="ca-pub-9143865157586788"
+           data-ad-slot="auto"></ins>
+      <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn-primary" onclick="startGame()">Try Again</button>
+      <button class="btn-gold" onclick="watchAd()">Watch Ad = +1 Life</button>
+      <button class="btn-ghost" onclick="showMenu()">Menu</button>
+    </div>
+  </div>
+
+  <!-- Ad / Rewarded Screen -->
+  <div id="adScreen" class="overlay">
+    <div style="font-size:18px;color:#fbbf24;font-weight:600;margin-bottom:8px;">Rewarded Ad</div>
+    <ins class="adsbygoogle"
+         style="display:inline-block;width:250px;height:130px"
+         data-ad-client="ca-pub-9143865157586788"
+         data-ad-slot="auto"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+    <div style="font-size:13px;color:#a78bfa;margin-top:10px;">Closes in <span id="adTimer">5</span>s</div>
+  </div>
+
+  <!-- Skin Shop -->
+  <div id="skinShop" class="overlay">
+    <div style="font-size:20px;font-weight:700;color:#fff;margin-bottom:12px;">Choose Your Skin</div>
+    <div id="shopGrid" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:16px;"></div>
+    <button class="btn-primary" onclick="closeSkins()">Close</button>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div style="font-size:14px;font-weight:600;color:#fff;text-shadow:0 1px 4px #000;">Score: <span id="hudScore">0</span></div>
+    <div style="font-size:13px;color:#fbbf24;text-shadow:0 1px 4px #000;">Coins: <span id="hudCoins">0</span></div>
+    <div style="font-size:13px;color:#f87171;text-shadow:0 1px 4px #000;">Lives: <span id="hudLives">3</span></div>
+  </div>
+
+  <!-- Powerup HUD -->
+  <div id="powerupHud">
+    <div id="shieldIndicator" class="indicator" style="color:#38bdf8;">Shield</div>
+    <div id="magnetIndicator" class="indicator" style="color:#fbbf24;">Magnet</div>
+    <div id="boostIndicator" class="indicator" style="color:#4ade80;">Speed Boost</div>
+  </div>
+</div>
+
+<!-- Bottom AdSense Banner -->
+<div id="adBottom">
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-9143865157586788"
+       data-ad-slot="auto"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+
+<script>
+// ─── RESPONSIVE SIZING ─────────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const wrapper = document.getElementById('gameWrapper');
+
+let W, H, SCALE, GROUND;
+const BASE_W = 680, BASE_H = 320;
+
+function resize() {
+  const adTopEl = document.getElementById('adTop');
+  const adBotEl = document.getElementById('adBottom');
+  const adH = adTopEl.offsetHeight + adBotEl.offsetHeight + 16;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight - adH;
+
+  let cw, ch;
+  const aspect = BASE_W / BASE_H;
+
+  if (vw / vh > aspect) {
+    // wide screen: fit by height
+    ch = Math.min(vh, BASE_H);
+    cw = ch * aspect;
+  } else {
+    // tall screen (portrait/mobile): fit by width
+    cw = Math.min(vw - 8, BASE_W);
+    ch = cw / aspect;
+  }
+
+  cw = Math.floor(cw);
+  ch = Math.floor(ch);
+
+  canvas.width = cw;
+  canvas.height = ch;
+  canvas.style.width = cw + 'px';
+  canvas.style.height = ch + 'px';
+  wrapper.style.width = cw + 'px';
+  wrapper.style.height = ch + 'px';
+
+  W = cw;
+  H = ch;
+  SCALE = cw / BASE_W;
+  GROUND = H - 55 * SCALE;
+
+  // Responsive text in menu
+  const titleEl = document.getElementById('menuTitle');
+  const subEl = document.getElementById('menuSub');
+  const statsEl = document.getElementById('menuStats');
+  if (titleEl) titleEl.style.fontSize = Math.max(18, 32 * SCALE) + 'px';
+  if (subEl) subEl.style.fontSize = Math.max(10, 13 * SCALE) + 'px';
+  if (statsEl) statsEl.style.fontSize = Math.max(10, 13 * SCALE) + 'px';
+}
+
+window.addEventListener('resize', resize);
+window.addEventListener('orientationchange', () => { setTimeout(resize, 200); });
+
+// ─── GAME DATA ──────────────────────────────────────────────────────────────
+const SKINS = [
+  {id:0, name:'Classic', color:'#a78bfa', unlocked:true,  cost:0,   face:'😊'},
+  {id:1, name:'Ninja',   color:'#374151', unlocked:false, cost:50,  face:'🥷'},
+  {id:2, name:'Robot',   color:'#60a5fa', unlocked:false, cost:100, face:'🤖'},
+  {id:3, name:'Fire',    color:'#f97316', unlocked:false, cost:150, face:'🔥'},
+];
+
+let state = {
+  screen: 'menu',
+  score: 0,
+  coins: parseInt(localStorage.getItem('coins')||'0'),
+  bestScore: parseInt(localStorage.getItem('best')||'0'),
+  lives: 3,
+  selectedSkin: 0,
+  roundCount: parseInt(localStorage.getItem('rounds')||'0'),
+};
+
+let skinUnlocks = JSON.parse(localStorage.getItem('skins')||'[true,false,false,false]');
+
+function saveGame() {
+  localStorage.setItem('coins', state.coins);
+  localStorage.setItem('best', state.bestScore);
+  localStorage.setItem('rounds', state.roundCount);
+  localStorage.setItem('skins', JSON.stringify(skinUnlocks));
+}
+
+// ─── GAME OBJECTS ───────────────────────────────────────────────────────────
+let player, obstacles, coins, powerups, particles, bgStars;
+let gameSpeed, frameCount, isOnGround;
+let activePowerup = null, powerupTimer = 0;
+let animId;
+
+function initGame() {
+  gameSpeed = 3.5;
+  frameCount = 0;
+  player = {x: 80 * SCALE, y: GROUND, w: 32 * SCALE, h: 40 * SCALE, vy: 0, frame: 0};
+  obstacles = [];
+  coins = [];
+  powerups = [];
+  particles = [];
+  isOnGround = true;
+  activePowerup = null;
+  powerupTimer = 0;
+  state.score = 0;
+  state.lives = 3;
+  bgStars = Array.from({length:40}, () => ({
+    x: Math.random()*W, y: Math.random()*(H-80*SCALE),
+    r: (Math.random()*1.5+0.5)*SCALE, s: Math.random()*0.3+0.3
+  }));
+}
+
+// ─── SCREEN MANAGEMENT ──────────────────────────────────────────────────────
+function startGame() {
+  state.roundCount++;
+  saveGame();
+  if (state.roundCount % 3 === 0) { showInterstitial(); return; }
+  _startGameNow();
+}
+
+function _startGameNow() {
+  initGame();
+  state.screen = 'game';
+  document.getElementById('menuScreen').style.display = 'none';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'flex';
+  document.getElementById('powerupHud').style.display = 'flex';
+  updateHUD();
+  loop();
+}
+
+function showMenu() {
+  state.screen = 'menu';
+  document.getElementById('menuScreen').style.display = 'flex';
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('powerupHud').style.display = 'none';
+  document.getElementById('menuBest').textContent = state.bestScore;
+  document.getElementById('menuCoins').textContent = state.coins;
+  renderSkinPicker();
+}
+
+function showGameOver() {
+  state.screen = 'gameover';
+  document.getElementById('gameOverScreen').style.display = 'flex';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('powerupHud').style.display = 'none';
+  document.getElementById('finalScore').textContent = state.score;
+  document.getElementById('finalBest').textContent = state.bestScore;
+}
+
+function watchAd() {
+  document.getElementById('gameOverScreen').style.display = 'none';
+  document.getElementById('adScreen').style.display = 'flex';
+  let t = 5;
+  document.getElementById('adTimer').textContent = t;
+  const iv = setInterval(() => {
+    t--;
+    document.getElementById('adTimer').textContent = t;
+    if (t <= 0) {
+      clearInterval(iv);
+      document.getElementById('adScreen').style.display = 'none';
+      state.lives = 2;
+      state.screen = 'game';
+      document.getElementById('hud').style.display = 'flex';
+      document.getElementById('powerupHud').style.display = 'flex';
+      updateHUD();
+      loop();
+    }
+  }, 1000);
+}
+
+function showInterstitial() {
+  const el = document.createElement('div');
+  el.style.cssText = 'position:absolute;inset:0;background:#0a0018;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99;';
+  el.innerHTML = `
+    <div style="font-size:${14*SCALE}px;color:#a78bfa;margin-bottom:12px;">Interstitial Ad</div>
+    <ins class="adsbygoogle" style="display:inline-block;width:260px;height:140px"
+         data-ad-client="ca-pub-9143865157586788" data-ad-slot="auto"></ins>
+    <button id="skipAdBtn" style="margin-top:14px;padding:8px 22px;background:#7c3aed;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;display:none;">Continue</button>`;
+  wrapper.appendChild(el);
+  try { (adsbygoogle = window.adsbygoogle || []).push({}); } catch(e){}
+  setTimeout(() => {
+    const btn = el.querySelector('#skipAdBtn');
+    if (btn) {
+      btn.style.display = 'block';
+      btn.onclick = () => { el.remove(); _startGameNow(); };
+    }
+  }, 3000);
+}
+
+function showSkins()  { document.getElementById('skinShop').style.display = 'flex'; renderShopGrid(); }
+function closeSkins() { document.getElementById('skinShop').style.display = 'none'; }
+
+function renderSkinPicker() {
+  const el = document.getElementById('skinPicker');
+  const sz = Math.max(30, 40 * SCALE);
+  el.innerHTML = SKINS.map((s,i) => `
+    <div onclick="selectSkin(${i})" style="cursor:pointer;text-align:center;opacity:${skinUnlocks[i]?1:0.4};">
+      <div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${s.color};border:${state.selectedSkin===i?'3px solid #fff':'2px solid transparent'};display:flex;align-items:center;justify-content:center;font-size:${sz*0.5}px;margin:0 auto;">${s.face}</div>
+    </div>`).join('');
+}
+
+function renderShopGrid() {
+  const el = document.getElementById('shopGrid');
+  el.innerHTML = SKINS.map((s,i) => `
+    <div style="text-align:center;background:#1e1e2e;border-radius:10px;padding:12px 16px;border:${state.selectedSkin===i?'2px solid #a78bfa':'1px solid #374151'};">
+      <div style="width:52px;height:52px;border-radius:50%;background:${s.color};display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 6px;">${s.face}</div>
+      <div style="font-size:12px;color:#c4b5fd;margin-bottom:6px;">${s.name}</div>
+      ${skinUnlocks[i]
+        ? `<button onclick="selectSkin(${i});closeSkins();" style="padding:4px 14px;font-size:12px;background:${state.selectedSkin===i?'#7c3aed':'transparent'};color:${state.selectedSkin===i?'#fff':'#a78bfa'};border:1px solid #7c3aed;border-radius:6px;cursor:pointer;">${state.selectedSkin===i?'Equipped':'Equip'}</button>`
+        : `<button onclick="buySkin(${i})" style="padding:4px 14px;font-size:12px;background:transparent;color:#fbbf24;border:1px solid #fbbf24;border-radius:6px;cursor:pointer;">🪙 ${s.cost}</button>`
+      }
+    </div>`).join('');
+}
+
+function selectSkin(i) {
+  if (!skinUnlocks[i]) return;
+  state.selectedSkin = i;
+  renderSkinPicker();
+  renderShopGrid();
+  saveGame();
+}
+
+function buySkin(i) {
+  if (state.coins >= SKINS[i].cost) {
+    state.coins -= SKINS[i].cost;
+    skinUnlocks[i] = true;
+    state.selectedSkin = i;
+    saveGame();
+    renderShopGrid();
+  } else {
+    alert('Not enough coins! Collect more in-game.');
+  }
+}
+
+function updateHUD() {
+  document.getElementById('hudScore').textContent = state.score;
+  document.getElementById('hudCoins').textContent = state.coins;
+  document.getElementById('hudLives').textContent = '❤️'.repeat(state.lives);
+}
+
+// ─── CONTROLS ───────────────────────────────────────────────────────────────
+function jump() {
+  if (state.screen !== 'game') return;
+  if (isOnGround) {
+    player.vy = -13 * SCALE;
+    isOnGround = false;
+    spawnParticles(player.x+player.w/2, player.y+player.h, '#c4b5fd', 5);
+  }
+}
+
+canvas.addEventListener('click', jump);
+canvas.addEventListener('touchstart', e => { e.preventDefault(); jump(); }, {passive:false});
+document.addEventListener('keydown', e => { if (e.code==='Space'||e.code==='ArrowUp') { e.preventDefault(); jump(); } });
+
+// ─── PARTICLES ──────────────────────────────────────────────────────────────
+function spawnParticles(x, y, color, n) {
+  for (let i=0;i<n;i++) {
+    particles.push({x, y, vx:(Math.random()-0.5)*4*SCALE, vy:(Math.random()-1)*4*SCALE, r:(Math.random()*3+1)*SCALE, life:1, color});
+  }
+}
+
+// ─── SPAWNING ───────────────────────────────────────────────────────────────
+function spawnObstacle() {
+  const types = ['cactus','bird','rock'];
+  const type = types[Math.floor(Math.random()*types.length)];
+  let o = {type, x: W+20};
+  const sc = SCALE;
+  if (type==='cactus')     { o.y=GROUND;       o.w=20*sc; o.h=45*sc; o.color='#16a34a'; }
+  else if (type==='bird')  { o.y=GROUND-60*sc; o.w=30*sc; o.h=20*sc; o.color='#f97316'; }
+  else                     { o.y=GROUND+10*sc; o.w=28*sc; o.h=25*sc; o.color='#78716c'; }
+  obstacles.push(o);
+}
+
+function spawnCoin() {
+  coins.push({x:W+10, y:GROUND-30*SCALE-Math.random()*50*SCALE, r:8*SCALE, collected:false, float:Math.random()*Math.PI*2});
+}
+
+function spawnPowerup() {
+  const types = ['shield','magnet','boost'];
+  const type = types[Math.floor(Math.random()*types.length)];
+  powerups.push({type, x:W+10, y:GROUND-50*SCALE-Math.random()*30*SCALE, r:12*SCALE, float:0});
+}
+
+// ─── GAME LOOP ───────────────────────────────────────────────────────────────
+function loop() {
+  if (state.screen !== 'game') return;
+  cancelAnimationFrame(animId);
+  update();
+  draw();
+  animId = requestAnimationFrame(loop);
+}
+
+function update() {
+  frameCount++;
+  gameSpeed = 3.5 + state.score * 0.003;
+  state.score = Math.floor(frameCount / 6);
+  if (state.score > state.bestScore) { state.bestScore = state.score; saveGame(); }
+
+  const grav = 0.7 * SCALE;
+  player.vy += grav;
+  player.y += player.vy;
+  if (player.y >= GROUND) { player.y = GROUND; player.vy = 0; isOnGround = true; }
+  player.frame = frameCount % 20 < 10 ? 0 : 1;
+
+  bgStars.forEach(s => { s.x -= s.s; if (s.x < 0) { s.x = W; s.y = Math.random()*(H-80*SCALE); } });
+
+  if (frameCount % 90 === 0) spawnObstacle();
+  if (frameCount % 60 === 0) spawnCoin();
+  if (frameCount % 300 === 0) spawnPowerup();
+
+  const spd = gameSpeed * SCALE;
+  obstacles.forEach(o => o.x -= spd);
+  obstacles = obstacles.filter(o => o.x > -60*SCALE);
+
+  coins.forEach(c => { c.x -= spd; c.float += 0.1; c.y += Math.sin(c.float)*0.4*SCALE; });
+  coins = coins.filter(c => !c.collected && c.x > -20);
+
+  powerups.forEach(p => { p.x -= spd; p.float += 0.08; p.y += Math.sin(p.float)*0.5*SCALE; });
+  powerups = powerups.filter(p => p.x > -20);
+
+  if (activePowerup) {
+    powerupTimer--;
+    if (powerupTimer <= 0) {
+      document.getElementById(activePowerup+'Indicator').style.display = 'none';
+      activePowerup = null;
+    }
+  }
+
+  if (activePowerup === 'magnet') {
+    coins.forEach(c => {
+      const dx = player.x+player.w/2 - c.x, dy = player.y+player.h/2 - c.y;
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      if (dist < 120*SCALE) { c.x += dx*0.08; c.y += dy*0.08; }
+    });
+  }
+
+  particles.forEach(p => { p.x+=p.vx; p.y+=p.vy; p.vy+=0.2*SCALE; p.life-=0.05; });
+  particles = particles.filter(p => p.life > 0);
+
+  // Collision: coins
+  coins.forEach(c => {
+    if (!c.collected && Math.hypot(c.x-player.x-player.w/2, c.y-player.y-player.h/2) < player.w/2+c.r) {
+      c.collected = true;
+      state.coins++;
+      spawnParticles(c.x, c.y, '#fbbf24', 6);
+      checkSkinUnlock();
+    }
+  });
+
+  // Collision: powerups
+  powerups.forEach((p,i) => {
+    if (Math.hypot(p.x-player.x-player.w/2, p.y-player.y-player.h/2) < player.w/2+p.r) {
+      powerups.splice(i,1);
+      activePowerup = p.type;
+      powerupTimer = 300;
+      document.getElementById('shieldIndicator').style.display = p.type==='shield'?'block':'none';
+      document.getElementById('magnetIndicator').style.display = p.type==='magnet'?'block':'none';
+      document.getElementById('boostIndicator').style.display = p.type==='boost'?'block':'none';
+      if (p.type==='boost') gameSpeed *= 1.5;
+      spawnParticles(p.x, p.y, '#38bdf8', 10);
+    }
+  });
+
+  // Collision: obstacles
+  obstacles.forEach(o => {
+    const px=player.x+4*SCALE, py=player.y+4*SCALE, pw=player.w-8*SCALE, ph=player.h-4*SCALE;
+    if (px<o.x+o.w && px+pw>o.x && py<o.y+o.h && py+ph>o.y) {
+      if (activePowerup==='shield') {
+        activePowerup = null;
+        document.getElementById('shieldIndicator').style.display = 'none';
+        spawnParticles(player.x+player.w/2, player.y+player.h/2, '#38bdf8', 12);
+        o.x = -100;
+      } else {
+        state.lives--;
+        o.x = -100;
+        spawnParticles(player.x+player.w/2, player.y+player.h/2, '#f87171', 12);
+        if (state.lives <= 0) { saveGame(); showGameOver(); return; }
+      }
+    }
+  });
+
+  updateHUD();
+}
+
+function checkSkinUnlock() {
+  const thresholds = [0, 50, 100, 150];
+  SKINS.forEach((s,i) => { if (state.coins >= thresholds[i]) skinUnlocks[i] = true; });
+  saveGame();
+}
+
+// ─── DRAWING ─────────────────────────────────────────────────────────────────
+function draw() {
+  const sky = ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0, '#1a0a3d');
+  sky.addColorStop(0.6, '#2d1b69');
+  sky.addColorStop(1, '#1e1b4b');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0,0,W,H);
+
+  bgStars.forEach(s => {
+    ctx.fillStyle = `rgba(255,255,255,${0.4+Math.sin(frameCount*0.05+s.x)*0.3})`;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  const gFloor = GROUND + 40*SCALE;
+  ctx.fillStyle = '#312e81';
+  ctx.fillRect(0, gFloor, W, H - gFloor);
+  ctx.fillStyle = '#4c1d95';
+  ctx.fillRect(0, GROUND+36*SCALE, W, 8*SCALE);
+
+  const tileW = 60 * SCALE;
+  const tileOff = (frameCount * gameSpeed * SCALE * 0.8) % tileW;
+  ctx.strokeStyle = '#6d28d9';
+  ctx.lineWidth = 0.5;
+  for (let tx = -tileOff; tx < W; tx += tileW) {
+    ctx.beginPath();
+    ctx.moveTo(tx, GROUND+36*SCALE);
+    ctx.lineTo(tx, H);
+    ctx.stroke();
+  }
+  ctx.lineWidth = 1;
+
+  // Obstacles
+  obstacles.forEach(o => {
+    ctx.fillStyle = o.color;
+    if (o.type==='cactus') {
+      ctx.fillRect(o.x+6*SCALE, o.y, 8*SCALE, o.h);
+      ctx.fillRect(o.x, o.y+10*SCALE, 20*SCALE, 6*SCALE);
+      ctx.fillRect(o.x+2*SCALE, o.y+5*SCALE, 5*SCALE, 12*SCALE);
+      ctx.fillRect(o.x+13*SCALE, o.y+8*SCALE, 5*SCALE, 10*SCALE);
+    } else if (o.type==='bird') {
+      ctx.beginPath();
+      ctx.ellipse(o.x+o.w/2, o.y+o.h/2, o.w/2, o.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      const wingY = o.y + (frameCount%20<10?0:4*SCALE);
+      ctx.beginPath();
+      ctx.moveTo(o.x, wingY+o.h/2);
+      ctx.quadraticCurveTo(o.x-10*SCALE, wingY, o.x-5*SCALE, wingY+o.h);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(o.x+o.w, wingY+o.h/2);
+      ctx.quadraticCurveTo(o.x+o.w+10*SCALE, wingY, o.x+o.w+5*SCALE, wingY+o.h);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.ellipse(o.x+o.w/2, o.y+o.h/2, o.w/2, o.h/2, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#57534e';
+      ctx.beginPath();
+      ctx.ellipse(o.x+8*SCALE, o.y+8*SCALE, 5*SCALE, 4*SCALE, -0.5, 0, Math.PI*2);
+      ctx.fill();
+    }
+  });
+
+  // Coins
+  coins.filter(c=>!c.collected).forEach(c => {
+    const glow = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r*2);
+    glow.addColorStop(0, '#fde68a');
+    glow.addColorStop(1, 'rgba(251,191,36,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r*2, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fbbf24';
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, c.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = '#fde68a';
+    ctx.beginPath();
+    ctx.arc(c.x-2*SCALE, c.y-2*SCALE, c.r*0.4, 0, Math.PI*2);
+    ctx.fill();
+  });
+
+  // Powerups
+  powerups.forEach(p => {
+    const colors = {shield:'#38bdf8', magnet:'#fbbf24', boost:'#4ade80'};
+    const icons  = {shield:'🛡', magnet:'🧲', boost:'⚡'};
+    ctx.fillStyle = colors[p.type]+'44';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r*1.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = colors[p.type];
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+    ctx.font = `${14*SCALE}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(icons[p.type], p.x, p.y+5*SCALE);
+  });
+
+  // Particles
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  drawPlayer();
+
+  if (activePowerup === 'boost') {
+    for (let i=0;i<3;i++) {
+      ctx.fillStyle = `rgba(74,222,128,${0.2-i*0.06})`;
+      ctx.fillRect(player.x-15*SCALE-i*10*SCALE, player.y+5*SCALE, player.w*0.8, player.h*0.6);
+    }
+  }
+}
+
+function drawPlayer() {
+  const s = SKINS[state.selectedSkin];
+  const px=player.x, py=player.y, pw=player.w, ph=player.h;
+  const bob = isOnGround ? (player.frame===0?0:-2*SCALE) : 0;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(px+pw/2, GROUND+ph+2*SCALE, pw/2, 5*SCALE, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.fillStyle = s.color;
+  ctx.beginPath();
+  ctx.roundRect(px, py+bob, pw, ph*0.65, 6*SCALE);
+  ctx.fill();
+
+  ctx.fillStyle = s.color === '#374151' ? '#1f2937' : '#7c3aed';
+  const legW = 10*SCALE, legH = ph*0.38;
+  if (isOnGround) {
+    const phase = player.frame===0?0:5*SCALE;
+    ctx.fillRect(px+2*SCALE, py+ph*0.62+bob, legW, legH-phase);
+    ctx.fillRect(px+pw-legW-2*SCALE, py+ph*0.62+bob, legW, legH-(legH-phase));
+  } else {
+    ctx.fillRect(px+2*SCALE, py+ph*0.62+bob, legW, legH*0.6);
+    ctx.fillRect(px+pw-legW-2*SCALE, py+ph*0.62+bob, legW, legH*0.6);
+  }
+
+  ctx.font = `${Math.floor(pw*0.7)}px serif`;
+  ctx.textAlign = 'center';
+  ctx.fillText(s.face, px+pw/2, py+ph*0.45+bob);
+
+  if (activePowerup==='shield') {
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.5*SCALE;
+    ctx.beginPath();
+    ctx.ellipse(px+pw/2, py+ph/2+bob, pw*0.8, ph*0.6, 0, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+resize();
+showMenu();
+</script>
+</body>
+</html>
