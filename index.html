@@ -1,195 +1,516 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Dash Runner</title>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9143865157586788" crossorigin="anonymous"></script>
-<style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body {
-    width: 100%; height: 100%;
-    background: #0a0018;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    touch-action: manipulation;
-    user-select: none;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Flappy Bird</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9143865157586788" crossorigin="anonymous"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  #gameWrapper {
-    position: relative;
-    flex-shrink: 0;
-    user-select: none;
-    border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(124,58,237,0.3);
-  }
+    html, body {
+      width: 100%;
+      height: 100%;
+      height: 100dvh;
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+      font-family: Verdana, sans-serif;
+    }
 
-  #gameCanvas {
-    display: block;
-    border-radius: 12px;
-    border: 1px solid rgba(124,58,237,0.4);
-    touch-action: manipulation;
-  }
+    #ad-top {
+      width: 100%;
+      max-width: 728px;
+      min-height: 50px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-  .overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    border-radius: 12px;
-  }
+    #game-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 0;
+      overflow: hidden;
+    }
 
-  .btn-primary {
-    padding: 14px 32px;
-    font-size: 18px;
-    font-weight: 600;
-    background: #7c3aed;
-    color: #fff;
-    border: none;
-    border-radius: 12px;
-    cursor: pointer;
-    min-width: 160px;
-  }
-  .btn-primary:active { background: #6d28d9; transform: scale(0.95); }
+    #fb-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      width: 100%;
+      height: 100%;
+    }
 
-  /* Other buttons */
-  .btn-outline, .btn-gold, .btn-ghost {
-    padding: 12px 24px;
-    font-size: 16px;
-    border-radius: 12px;
-  }
+    #fb-canvas {
+      border-radius: 8px;
+      border: 0.5px solid rgba(255,255,255,0.15);
+      cursor: pointer;
+      display: block;
+      touch-action: manipulation;
+      max-width: 100%;
+      max-height: 100%;
+    }
 
-  #hud, #powerupHud {
-    pointer-events: none;
-    text-shadow: 0 2px 6px #000;
-  }
+    #ad-bottom {
+      width: 100%;
+      max-width: 728px;
+      min-height: 50px;
+      background: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
 
-  .indicator {
-    font-size: 14px;
-    padding: 6px 12px;
-    border-radius: 20px;
-    background: rgba(0,0,0,0.6);
-  }
-</style>
+    .adsbygoogle {
+      display: block;
+      width: 100%;
+    }
+
+    #fullscreen-btn {
+      position: fixed;
+      bottom: 14px;
+      right: 14px;
+      z-index: 999;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.25);
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(4px);
+      transition: background 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #fullscreen-btn:hover { background: rgba(0,0,0,0.78); }
+
+    /* When fullscreen: hide ads, stretch game */
+    :fullscreen #ad-top,
+    :-webkit-full-screen #ad-top,
+    :fullscreen #ad-bottom,
+    :-webkit-full-screen #ad-bottom { display: none !important; }
+
+    :fullscreen #game-container,
+    :-webkit-full-screen #game-container {
+      height: 100vh;
+    }
+  </style>
 </head>
 <body>
 
-<div id="gameWrapper">
-  <canvas id="gameCanvas"></canvas>
+  <!-- Fullscreen Button -->
+  <button id="fullscreen-btn" title="Fullscreen">⛶</button>
 
-  <!-- All your original overlays remain exactly the same -->
-  <!-- Menu, Game Over, Skin Shop, etc. -->
-  <div id="menuScreen" class="overlay" style="background: linear-gradient(180deg, #1a0a3d 0%, #2d1b69 50%, #1a0a3d 100%);">
-    <!-- ... your original menu content ... -->
-    <div id="menuTitle" style="font-weight:700;color:#fff;letter-spacing:2px;text-shadow:0 0 20px #a78bfa;">DASH RUNNER</div>
-    <div id="menuSub" style="color:#c4b5fd;margin:8px 0 24px;">Collect coins. Dodge obstacles. Go forever.</div>
-    <div id="skinPicker" style="display:flex;gap:12px;margin-bottom:20px;"></div>
-    <div style="display:flex;gap:12px;margin-bottom:12px;">
-      <button class="btn-primary" onclick="startGame()">Play</button>
-      <button class="btn-outline" onclick="showSkins()">Skins</button>
-    </div>
-    <div id="menuStats" style="color:#a78bfa;">Best: <span id="menuBest">0</span> | Coins: <span id="menuCoins">0</span></div>
+  <!-- Top Ad -->
+  <div id="ad-top">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-9143865157586788"
+         data-ad-slot="7386193702"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
   </div>
 
-  <!-- Keep all your other overlays (gameOverScreen, adScreen, skinShop, hud, powerupHud) exactly as they were -->
-  <!-- ... paste them here ... -->
-</div>
+  <!-- Game -->
+  <div id="game-container">
+    <div id="fb-wrap">
+      <canvas id="fb-canvas" width="288" height="512"></canvas>
+    </div>
+  </div>
 
-<script>
-// ─── RESPONSIVE + MOBILE OPTIMIZED SIZING ─────────────────────────────────
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d', { alpha: true });
+  <!-- Bottom Ad -->
+  <div id="ad-bottom">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-9143865157586788"
+         data-ad-slot="7386193702"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+  </div>
 
-let W, H, SCALE, GROUND;
-const BASE_W = 680, BASE_H = 320;
+  <script>
+  // ─── Auto-scale canvas to fit available space ───────────────────────────────
+  (function autoScale() {
+    const GAME_W = 288, GAME_H = 512;
 
-function resize() {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+    function resize() {
+      const canvas  = document.getElementById('fb-canvas');
+      const adTop   = document.getElementById('ad-top');
+      const adBot   = document.getElementById('ad-bottom');
 
-  let cw, ch;
-  const aspect = BASE_W / BASE_H;
+      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
 
-  if (vw / vh > aspect) {
-    ch = Math.min(vh * 0.92, BASE_H);
-    cw = ch * aspect;
-  } else {
-    cw = Math.min(vw - 16, BASE_W);
-    ch = cw / aspect;
-  }
+      // Use actual measured heights of ad bars
+      const adTopH  = isFS ? 0 : adTop.getBoundingClientRect().height;
+      const adBotH  = isFS ? 0 : adBot.getBoundingClientRect().height;
 
-  cw = Math.floor(cw);
-  ch = Math.floor(ch);
+      const availW  = window.innerWidth;
+      const availH  = window.innerHeight - adTopH - adBotH;
 
-  canvas.width = cw;
-  canvas.height = ch;
-  canvas.style.width = cw + 'px';
-  canvas.style.height = ch + 'px';
+      const scale   = Math.min(availW / GAME_W, availH / GAME_H);
+      const drawW   = Math.floor(GAME_W * scale);
+      const drawH   = Math.floor(GAME_H * scale);
 
-  W = cw;
-  H = ch;
-  SCALE = cw / BASE_W;
-  GROUND = H - 55 * SCALE;
-}
+      canvas.style.width  = drawW + 'px';
+      canvas.style.height = drawH + 'px';
+    }
 
-window.addEventListener('resize', resize);
-window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+    // Fire on every relevant event
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
+    document.addEventListener('fullscreenchange', resize);
+    document.addEventListener('webkitfullscreenchange', resize);
 
-// Rest of your original game code (unchanged except for controls)
-let player, obstacles = [], coins = [], powerups = [], particles = [], bgStars;
-let gameSpeed = 3.5, frameCount = 0, isOnGround = true;
-let activePowerup = null, powerupTimer = 0;
-let state = { /* your original state */ };
+    // Run immediately + after fonts/ads settle
+    resize();
+    setTimeout(resize, 300);
+    setTimeout(resize, 800);
+    window.addEventListener('load', function(){ resize(); setTimeout(resize, 500); });
 
-// ... (Keep all your original functions: initGame, startGame, update, draw, etc.) ...
+    // ─── Fullscreen button ─────────────────────────────────────────────────
+    const btn = document.getElementById('fullscreen-btn');
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const el = document.documentElement;
+      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        const req = el.requestFullscreen || el.webkitRequestFullscreen;
+        if (req) req.call(el);
+        btn.textContent = '✕';
+        btn.title = 'Exit Fullscreen';
+      } else {
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (exit) exit.call(document);
+        btn.textContent = '⛶';
+        btn.title = 'Fullscreen';
+      }
+    });
 
-// ─── ENHANCED MOBILE CONTROLS ─────────────────────────────────────────────
-function jump() {
-  if (state.screen !== 'game') return;
-  if (isOnGround) {
-    player.vy = -13.5 * SCALE;
-    isOnGround = false;
-    spawnParticles(player.x + player.w/2, player.y + player.h, '#c4b5fd', 8);
-  }
-}
+    function onFSChange() {
+      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      btn.textContent = isFS ? '✕' : '⛶';
+      btn.title       = isFS ? 'Exit Fullscreen' : 'Fullscreen';
+      resize();
+    }
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
+  })();
 
-// Click + Tap
-canvas.addEventListener('click', jump);
-canvas.addEventListener('touchstart', e => {
-  e.preventDefault();
-  jump();
-}, { passive: false });
+  // ─── Original Game Logic (unchanged) ────────────────────────────────────────
+  (function(){
+    const cvs = document.getElementById('fb-canvas');
+    const ctx = cvs.getContext('2d');
 
-// Swipe Up Support (better mobile feel)
-let touchStartY = 0;
-canvas.addEventListener('touchstart', e => {
-  touchStartY = e.changedTouches[0].screenY;
-}, { passive: true });
+    const W = cvs.width, H = cvs.height;
 
-canvas.addEventListener('touchend', e => {
-  const touchEndY = e.changedTouches[0].screenY;
-  if (touchStartY - touchEndY > 50) { // swipe up
-    jump();
-  }
-}, { passive: true });
+    const COLORS = {
+      sky: ['#70c5ce','#a8dce1'],
+      ground: '#ded895',
+      groundLine: '#bbb76b',
+      pipe: '#73bf2e',
+      pipeDark: '#558a1e',
+      pipeCap: '#5aa620',
+      bird: '#f5d027',
+      birdWing: '#e8b820',
+      birdEye: '#fff',
+      birdPupil: '#333',
+      birdBeak: '#f59520',
+      cloud: '#fff',
+      score: '#fff',
+      scoreShadow: 'rgba(0,0,0,0.4)',
+      overlay: 'rgba(0,0,0,0.45)',
+      text: '#fff',
+    };
 
-// Keyboard (for desktop testing)
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space' || e.code === 'ArrowUp') {
-    e.preventDefault();
-    jump();
-  }
-});
+    let state, bird, pipes, score, hiScore, frame, animId, gameOver, started;
 
-// Initialize
-resize();
-showMenu(); // your original function
-</script>
+    const GAP = 110;
+    const GROUND_H = 60;
+    const PIPE_W = 40;
+    const PIPE_SPEED = 2.2;
+    const GRAVITY = 0.38;
+    const FLAP = -6.5;
+    const BIRD_X = 60;
+    const BIRD_R = 13;
+
+    let clouds = [];
+
+    function initClouds() {
+      clouds = [
+        {x:60, y:60, s:1},
+        {x:180, y:90, s:0.7},
+        {x:250, y:50, s:0.85},
+      ];
+    }
+
+    function reset() {
+      bird = { y: H/2 - 30, vy: 0, rot: 0, wingAngle: 0, wingDir: 1 };
+      pipes = [];
+      score = 0;
+      frame = 0;
+      gameOver = false;
+      started = false;
+      initClouds();
+      if(!hiScore) hiScore = 0;
+    }
+
+    function addPipe() {
+      const minY = -200;
+      const maxY = -80;
+      const y = Math.floor(Math.random() * (maxY - minY)) + minY;
+      pipes.push({ x: W + 10, y, scored: false });
+    }
+
+    function flap() {
+      if (gameOver) { reset(); return; }
+      if (!started) started = true;
+      bird.vy = FLAP;
+    }
+
+    cvs.addEventListener('click', flap);
+    cvs.addEventListener('touchstart', function(e){ e.preventDefault(); flap(); }, {passive:false});
+    document.addEventListener('keydown', function(e){ if(e.code==='Space'||e.code==='ArrowUp') flap(); });
+
+    function drawBg() {
+      const grad = ctx.createLinearGradient(0,0,0,H - GROUND_H);
+      grad.addColorStop(0, '#70c5ce');
+      grad.addColorStop(1, '#a8e0e8');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,W,H-GROUND_H);
+    }
+
+    function drawCloud(cx, cy, s) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(s, s);
+      ctx.fillStyle = 'rgba(255,255,255,0.82)';
+      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(22,4,14,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-18,5,12,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(6,-10,12,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGround(offset) {
+      const g = H - GROUND_H;
+      ctx.fillStyle = COLORS.ground;
+      ctx.fillRect(0, g, W, GROUND_H);
+      ctx.fillStyle = COLORS.groundLine;
+      ctx.fillRect(0, g, W, 5);
+      ctx.fillStyle = '#c8b85a';
+      for(let i=0;i<8;i++){
+        const bx = ((i*40 - offset) % (W+40) + W+40) % (W+40);
+        ctx.fillRect(bx, g+8, 30, 4);
+      }
+    }
+
+    function drawPipe(px, py) {
+      const capH = 14, capExtra = 5;
+      const pipeBottom = py + 320;
+      const topPipeEnd = py + 320 - GAP/2;
+      const botPipeStart = py + 320 + GAP/2;
+
+      ctx.fillStyle = COLORS.pipe;
+      ctx.strokeStyle = COLORS.pipeDark;
+      ctx.lineWidth = 1.5;
+
+      ctx.beginPath();
+      ctx.rect(px, 0, PIPE_W, topPipeEnd - capH);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = COLORS.pipeCap;
+      ctx.beginPath();
+      ctx.rect(px - capExtra, topPipeEnd - capH, PIPE_W + capExtra*2, capH);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = COLORS.pipe;
+      ctx.beginPath();
+      ctx.rect(px, botPipeStart + capH, PIPE_W, H - GROUND_H - botPipeStart - capH);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = COLORS.pipeCap;
+      ctx.beginPath();
+      ctx.rect(px - capExtra, botPipeStart, PIPE_W + capExtra*2, capH);
+      ctx.fill(); ctx.stroke();
+
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillRect(px+4, 0, 6, topPipeEnd - capH);
+      ctx.fillRect(px+4, botPipeStart + capH, 6, H - GROUND_H - botPipeStart - capH);
+    }
+
+    function drawBird() {
+      const bx = BIRD_X, by = bird.y;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.rotate(bird.rot);
+
+      const wing = Math.sin(bird.wingAngle) * 5;
+
+      ctx.fillStyle = COLORS.birdWing;
+      ctx.beginPath();
+      ctx.ellipse(-4, 4 + wing, 9, 5, 0.3, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = COLORS.bird;
+      ctx.beginPath();
+      ctx.arc(0, 0, BIRD_R, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#d4a800';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+
+      ctx.fillStyle = COLORS.birdEye;
+      ctx.beginPath(); ctx.arc(5, -4, 5, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = COLORS.birdPupil;
+      ctx.beginPath(); ctx.arc(6, -4, 2.8, 0, Math.PI*2); ctx.fill();
+
+      ctx.fillStyle = COLORS.birdBeak;
+      ctx.beginPath();
+      ctx.moveTo(13, -1); ctx.lineTo(20, -4); ctx.lineTo(20, 1); ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function drawScore() {
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 36px Verdana, sans-serif';
+      ctx.fillStyle = COLORS.scoreShadow;
+      ctx.fillText(score, W/2+2, 52);
+      ctx.fillStyle = COLORS.score;
+      ctx.fillText(score, W/2, 50);
+    }
+
+    function drawOverlay(text, sub) {
+      ctx.fillStyle = COLORS.overlay;
+      ctx.fillRect(0, 0, W, H);
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 28px Verdana, sans-serif';
+      ctx.fillStyle = '#fff';
+      ctx.fillText(text, W/2, H/2 - 30);
+      ctx.font = '15px Verdana, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.fillText(sub, W/2, H/2 + 10);
+      ctx.font = 'bold 15px Verdana, sans-serif';
+      ctx.fillStyle = '#f5d027';
+      ctx.fillText('Best: ' + hiScore, W/2, H/2 + 38);
+    }
+
+    function drawStart() {
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 20px Verdana, sans-serif';
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText('Tap / Space to start', W/2+1, H/2 + 61);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('Tap / Space to start', W/2, H/2 + 60);
+    }
+
+    let groundOffset = 0;
+
+    function loop() {
+      frame++;
+      ctx.clearRect(0,0,W,H);
+      drawBg();
+
+      for(let c of clouds) {
+        drawCloud(c.x, c.y, c.s);
+        if(started && !gameOver) c.x -= 0.35 * c.s;
+        if(c.x < -60) c.x = W + 60;
+      }
+
+      if(started && !gameOver) {
+        bird.vy += GRAVITY;
+        bird.y += bird.vy;
+        bird.rot = Math.max(-0.5, Math.min(Math.PI/2.2, bird.vy * 0.065));
+        bird.wingAngle += 0.22;
+        groundOffset = (groundOffset + PIPE_SPEED) % 40;
+
+        if(frame % 75 === 0) addPipe();
+
+        for(let p of pipes) {
+          p.x -= PIPE_SPEED;
+          const cy = p.y + 320;
+          const topEnd = cy - GAP/2;
+          const botStart = cy + GAP/2;
+
+          const bLeft = BIRD_X - BIRD_R + 4;
+          const bRight = BIRD_X + BIRD_R - 2;
+          const bTop = bird.y - BIRD_R + 4;
+          const bBot = bird.y + BIRD_R - 4;
+
+          if(bRight > p.x && bLeft < p.x + PIPE_W) {
+            if(bTop < topEnd || bBot > botStart) {
+              endGame(); return;
+            }
+          }
+          if(!p.scored && p.x + PIPE_W < BIRD_X) {
+            p.scored = true; score++;
+          }
+        }
+        pipes = pipes.filter(p => p.x > -60);
+
+        if(bird.y + BIRD_R > H - GROUND_H) {
+          bird.y = H - GROUND_H - BIRD_R;
+          endGame(); return;
+        }
+        if(bird.y - BIRD_R < 0) {
+          bird.y = BIRD_R;
+          bird.vy = 0;
+        }
+      } else {
+        bird.wingAngle += 0.12;
+        if(!started) {
+          bird.y = H/2 - 30 + Math.sin(frame * 0.05) * 6;
+        }
+      }
+
+      for(let p of pipes) drawPipe(p.x, p.y);
+
+      drawGround(groundOffset);
+      drawBird();
+
+      if(started) drawScore();
+      if(!started) drawStart();
+      if(gameOver) drawOverlay('Game Over', 'Score: ' + score);
+
+      animId = requestAnimationFrame(loop);
+    }
+
+    function endGame() {
+      gameOver = true;
+      if(score > hiScore) hiScore = score;
+      loop();
+      cancelAnimationFrame(animId);
+      drawOverlay('Game Over', 'Score: ' + score);
+      cvs.addEventListener('click', restart, {once:true});
+      cvs.addEventListener('touchstart', restart, {once:true, passive:false});
+      document.addEventListener('keydown', restartKey, {once:true});
+    }
+
+    function restart(e) { if(e && e.preventDefault) e.preventDefault(); reset(); cancelAnimationFrame(animId); animId = requestAnimationFrame(loop); }
+    function restartKey(e) { if(e.code==='Space'||e.code==='ArrowUp') restart(); }
+
+    reset();
+    animId = requestAnimationFrame(loop);
+  })();
+  </script>
 </body>
 </html>
