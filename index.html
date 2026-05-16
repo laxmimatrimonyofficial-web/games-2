@@ -1,516 +1,529 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Flappy Bird</title>
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9143865157586788" crossorigin="anonymous"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Breakout</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body {
-      width: 100%;
-      height: 100%;
-      height: 100dvh;
-      background: #1a1a2e;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow: hidden;
-      font-family: Verdana, sans-serif;
-    }
+:root {
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #6b7280;
+  --color-border-secondary: #d1d5db;
+  --color-background-secondary: #f9fafb;
+  --font-mono: 'Courier New', monospace;
+  --border-radius-md: 8px;
+}
 
-    #ad-top {
-      width: 100%;
-      max-width: 728px;
-      min-height: 50px;
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #f3f4f6;
+    --color-text-secondary: #9ca3af;
+    --color-border-secondary: #374151;
+    --color-background-secondary: #111827;
+  }
+}
 
-    #game-container {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      min-height: 0;
-      overflow: hidden;
-    }
+html, body {
+  width: 100%;
+  height: 100%;
+  background: var(--color-background-secondary);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: hidden;
+}
 
-    #fb-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      user-select: none;
-      width: 100%;
-      height: 100%;
-    }
+#game-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1rem 0;
+  font-family: var(--font-mono, monospace);
+  width: 100%;
+  max-width: 560px;
+}
 
-    #fb-canvas {
-      border-radius: 8px;
-      border: 0.5px solid rgba(255,255,255,0.15);
-      cursor: pointer;
-      display: block;
-      touch-action: manipulation;
-      max-width: 100%;
-      max-height: 100%;
-    }
+#hud {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 0.75rem;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.05em;
+}
+#hud span { color: var(--color-text-primary); font-weight: 500; }
 
-    #ad-bottom {
-      width: 100%;
-      max-width: 728px;
-      min-height: 50px;
-      background: #111;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
+#canvas {
+  border: 0.5px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  display: block;
+  cursor: none;
+  background: var(--color-background-secondary);
+  max-width: 100%;
+  touch-action: none;
+}
 
-    .adsbygoogle {
-      display: block;
-      width: 100%;
-    }
+#bottom-bar {
+  margin-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 0 1rem;
+}
 
-    #fullscreen-btn {
-      position: fixed;
-      bottom: 14px;
-      right: 14px;
-      z-index: 999;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: rgba(0,0,0,0.55);
-      border: 1px solid rgba(255,255,255,0.25);
-      color: #fff;
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      backdrop-filter: blur(4px);
-      transition: background 0.2s;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #fullscreen-btn:hover { background: rgba(0,0,0,0.78); }
+#msg {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  min-height: 20px;
+  letter-spacing: 0.03em;
+  text-align: center;
+}
 
-    /* When fullscreen: hide ads, stretch game */
-    :fullscreen #ad-top,
-    :-webkit-full-screen #ad-top,
-    :fullscreen #ad-bottom,
-    :-webkit-full-screen #ad-bottom { display: none !important; }
+#sound-btn {
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: var(--border-radius-md);
+  border: 0.5px solid var(--color-border-secondary);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+#sound-btn:hover { background: var(--color-background-secondary); }
 
-    :fullscreen #game-container,
-    :-webkit-full-screen #game-container {
-      height: 100vh;
-    }
-  </style>
+/* Mobile tap-to-launch hint */
+#mobile-hint {
+  display: none;
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 0.4rem;
+  letter-spacing: 0.03em;
+}
+@media (pointer: coarse) {
+  #mobile-hint { display: block; }
+  body { cursor: default; }
+  #canvas { cursor: default; }
+}
+</style>
 </head>
 <body>
-
-  <!-- Fullscreen Button -->
-  <button id="fullscreen-btn" title="Fullscreen">⛶</button>
-
-  <!-- Top Ad -->
-  <div id="ad-top">
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-9143865157586788"
-         data-ad-slot="7386193702"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+<div id="game-wrap">
+  <div id="hud">
+    SCORE <span id="score">0</span> &nbsp;|&nbsp; LIVES <span id="lives">3</span> &nbsp;|&nbsp; LEVEL <span id="level">1</span>
   </div>
-
-  <!-- Game -->
-  <div id="game-container">
-    <div id="fb-wrap">
-      <canvas id="fb-canvas" width="288" height="512"></canvas>
-    </div>
+  <canvas id="canvas"></canvas>
+  <div id="bottom-bar">
+    <div id="msg">Tap or press Space to start</div>
+    <button id="sound-btn">🔊 Sound ON</button>
   </div>
+  <div id="mobile-hint">Drag finger to move paddle</div>
+</div>
 
-  <!-- Bottom Ad -->
-  <div id="ad-bottom">
-    <ins class="adsbygoogle"
-         style="display:block"
-         data-ad-client="ca-pub-9143865157586788"
-         data-ad-slot="7386193702"
-         data-ad-format="auto"
-         data-full-width-responsive="true"></ins>
-    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-  </div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
 
-  <script>
-  // ─── Auto-scale canvas to fit available space ───────────────────────────────
-  (function autoScale() {
-    const GAME_W = 288, GAME_H = 512;
+// --- Responsive sizing ---
+function getScale() {
+  const maxW = Math.min(window.innerWidth - 16, 520);
+  return maxW / 520;
+}
 
-    function resize() {
-      const canvas  = document.getElementById('fb-canvas');
-      const adTop   = document.getElementById('ad-top');
-      const adBot   = document.getElementById('ad-bottom');
+const BASE_W = 520, BASE_H = 380;
+let scale = 1;
 
-      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+function resizeCanvas() {
+  scale = getScale();
+  canvas.width = BASE_W;
+  canvas.height = BASE_H;
+  canvas.style.width = (BASE_W * scale) + 'px';
+  canvas.style.height = (BASE_H * scale) + 'px';
+}
 
-      // Use actual measured heights of ad bars
-      const adTopH  = isFS ? 0 : adTop.getBoundingClientRect().height;
-      const adBotH  = isFS ? 0 : adBot.getBoundingClientRect().height;
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-      const availW  = window.innerWidth;
-      const availH  = window.innerHeight - adTopH - adBotH;
+const W = BASE_W, H = BASE_H;
 
-      const scale   = Math.min(availW / GAME_W, availH / GAME_H);
-      const drawW   = Math.floor(GAME_W * scale);
-      const drawH   = Math.floor(GAME_H * scale);
+const PADDLE_W = 80, PADDLE_H = 10, PADDLE_Y = H - 30;
+const BALL_R = 7;
+const BRICK_ROWS = 5, BRICK_COLS = 10;
+const BRICK_W = 44, BRICK_H = 16, BRICK_GAP = 4;
+const BRICK_OFF_X = (W - (BRICK_COLS * (BRICK_W + BRICK_GAP) - BRICK_GAP)) / 2;
+const BRICK_OFF_Y = 50;
 
-      canvas.style.width  = drawW + 'px';
-      canvas.style.height = drawH + 'px';
-    }
+const COLORS = ['#E24B4A','#EF9F27','#1D9E75','#378ADD','#7F77DD','#D4537E'];
+const STRONG_COLORS = ['#A32D2D','#BA7517','#0F6E56','#185FA5','#534AB7','#993556'];
 
-    // Fire on every relevant event
-    window.addEventListener('resize', resize);
-    window.addEventListener('orientationchange', function(){ setTimeout(resize, 200); });
-    document.addEventListener('fullscreenchange', resize);
-    document.addEventListener('webkitfullscreenchange', resize);
+let audioCtx = null;
+let soundOn = true;
 
-    // Run immediately + after fonts/ads settle
-    resize();
-    setTimeout(resize, 300);
-    setTimeout(resize, 800);
-    window.addEventListener('load', function(){ resize(); setTimeout(resize, 500); });
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
 
-    // ─── Fullscreen button ─────────────────────────────────────────────────
-    const btn = document.getElementById('fullscreen-btn');
-    btn.addEventListener('click', function(e) {
-      e.stopPropagation();
-      const el = document.documentElement;
-      if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        const req = el.requestFullscreen || el.webkitRequestFullscreen;
-        if (req) req.call(el);
-        btn.textContent = '✕';
-        btn.title = 'Exit Fullscreen';
-      } else {
-        const exit = document.exitFullscreen || document.webkitExitFullscreen;
-        if (exit) exit.call(document);
-        btn.textContent = '⛶';
-        btn.title = 'Fullscreen';
-      }
+function playTone(freq, type, duration, gainVal, when) {
+  if (!soundOn) return;
+  try {
+    const ac = getAudio();
+    const t = when ?? ac.currentTime;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t);
+    gain.gain.setValueAtTime(gainVal, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch(e) {}
+}
+
+function soundPaddle() { playTone(220, 'sine', 0.08, 0.3); }
+function soundBrickHit() { playTone(440, 'square', 0.07, 0.15); }
+function soundBrickBreak() {
+  try {
+    if (!soundOn) return;
+    const ac = getAudio();
+    const t = ac.currentTime;
+    const osc = ac.createOscillator();
+    const gain = ac.createGain();
+    osc.connect(gain); gain.connect(ac.destination);
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(600, t);
+    osc.frequency.exponentialRampToValueAtTime(150, t + 0.15);
+    gain.gain.setValueAtTime(0.2, t);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    osc.start(t); osc.stop(t + 0.15);
+  } catch(e) {}
+}
+function soundWall() { playTone(180, 'sine', 0.06, 0.15); }
+function soundLoseLife() {
+  try {
+    if (!soundOn) return;
+    const ac = getAudio();
+    const t = ac.currentTime;
+    [300, 220, 150].forEach((f, i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.connect(g); g.connect(ac.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t + i*0.12);
+      g.gain.setValueAtTime(0.3, t + i*0.12);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i*0.12 + 0.11);
+      osc.start(t + i*0.12); osc.stop(t + i*0.12 + 0.11);
     });
+  } catch(e) {}
+}
+function soundWin() {
+  try {
+    if (!soundOn) return;
+    const ac = getAudio();
+    const t = ac.currentTime;
+    [440,550,660,880].forEach((f,i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.connect(g); g.connect(ac.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(f, t + i*0.1);
+      g.gain.setValueAtValue(0.25, t + i*0.1);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i*0.1 + 0.12);
+      osc.start(t + i*0.1); osc.stop(t + i*0.1 + 0.12);
+    });
+  } catch(e) {}
+}
+function soundGameOver() {
+  try {
+    if (!soundOn) return;
+    const ac = getAudio();
+    const t = ac.currentTime;
+    [300,250,200,150].forEach((f,i) => {
+      const osc = ac.createOscillator();
+      const g = ac.createGain();
+      osc.connect(g); g.connect(ac.destination);
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(f, t + i*0.13);
+      g.gain.setValueAtTime(0.2, t + i*0.13);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + i*0.13 + 0.12);
+      osc.start(t + i*0.13); osc.stop(t + i*0.13 + 0.12);
+    });
+  } catch(e) {}
+}
 
-    function onFSChange() {
-      const isFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
-      btn.textContent = isFS ? '✕' : '⛶';
-      btn.title       = isFS ? 'Exit Fullscreen' : 'Fullscreen';
-      resize();
+let state = 'idle';
+let score = 0, lives = 3, level = 1;
+let paddle = { x: W/2 - PADDLE_W/2 };
+let ball = {};
+let bricks = [];
+let particles = [];
+
+function resetBall() {
+  ball = { x: W/2, y: PADDLE_Y - BALL_R - 2, dx: 0, dy: 0, active: false };
+}
+
+function makeBricks() {
+  bricks = [];
+  for (let r = 0; r < BRICK_ROWS; r++) {
+    for (let c = 0; c < BRICK_COLS; c++) {
+      const hp = r < 2 ? 2 : 1;
+      bricks.push({
+        x: BRICK_OFF_X + c * (BRICK_W + BRICK_GAP),
+        y: BRICK_OFF_Y + r * (BRICK_H + BRICK_GAP),
+        w: BRICK_W, h: BRICK_H,
+        hp, maxHp: hp,
+        color: COLORS[r % COLORS.length],
+        scolor: STRONG_COLORS[r % COLORS.length],
+        alive: true
+      });
     }
-    document.addEventListener('fullscreenchange', onFSChange);
-    document.addEventListener('webkitfullscreenchange', onFSChange);
-  })();
+  }
+}
 
-  // ─── Original Game Logic (unchanged) ────────────────────────────────────────
-  (function(){
-    const cvs = document.getElementById('fb-canvas');
-    const ctx = cvs.getContext('2d');
+function launchBall() {
+  const angle = -Math.PI/2 + (Math.random()-0.5)*0.8;
+  const speed = 4 + level * 0.4;
+  ball.dx = Math.cos(angle) * speed;
+  ball.dy = Math.sin(angle) * speed;
+  ball.active = true;
+}
 
-    const W = cvs.width, H = cvs.height;
+function spawnParticles(x, y, color) {
+  for (let i = 0; i < 8; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 1.5 + Math.random() * 2.5;
+    particles.push({ x, y, dx: Math.cos(a)*s, dy: Math.sin(a)*s, life: 1, color });
+  }
+}
 
-    const COLORS = {
-      sky: ['#70c5ce','#a8dce1'],
-      ground: '#ded895',
-      groundLine: '#bbb76b',
-      pipe: '#73bf2e',
-      pipeDark: '#558a1e',
-      pipeCap: '#5aa620',
-      bird: '#f5d027',
-      birdWing: '#e8b820',
-      birdEye: '#fff',
-      birdPupil: '#333',
-      birdBeak: '#f59520',
-      cloud: '#fff',
-      score: '#fff',
-      scoreShadow: 'rgba(0,0,0,0.4)',
-      overlay: 'rgba(0,0,0,0.45)',
-      text: '#fff',
-    };
+function reset() {
+  makeBricks();
+  resetBall();
+  state = 'ready';
+  document.getElementById('msg').textContent = 'Tap or Space to launch';
+}
 
-    let state, bird, pipes, score, hiScore, frame, animId, gameOver, started;
+function init() {
+  score = 0; lives = 3; level = 1;
+  updateHUD();
+  reset();
+}
 
-    const GAP = 110;
-    const GROUND_H = 60;
-    const PIPE_W = 40;
-    const PIPE_SPEED = 2.2;
-    const GRAVITY = 0.38;
-    const FLAP = -6.5;
-    const BIRD_X = 60;
-    const BIRD_R = 13;
+function updateHUD() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('lives').textContent = lives;
+  document.getElementById('level').textContent = level;
+}
 
-    let clouds = [];
+function drawRoundRect(x, y, w, h, r, fill) {
+  ctx.beginPath();
+  ctx.roundRect(x, y, w, h, r);
+  ctx.fillStyle = fill;
+  ctx.fill();
+}
 
-    function initClouds() {
-      clouds = [
-        {x:60, y:60, s:1},
-        {x:180, y:90, s:0.7},
-        {x:250, y:50, s:0.85},
-      ];
-    }
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const paddleColor = isDark ? '#AFA9EC' : '#534AB7';
+  const ballColor = isDark ? '#5DCAA5' : '#0F6E56';
 
-    function reset() {
-      bird = { y: H/2 - 30, vy: 0, rot: 0, wingAngle: 0, wingDir: 1 };
-      pipes = [];
-      score = 0;
-      frame = 0;
-      gameOver = false;
-      started = false;
-      initClouds();
-      if(!hiScore) hiScore = 0;
-    }
-
-    function addPipe() {
-      const minY = -200;
-      const maxY = -80;
-      const y = Math.floor(Math.random() * (maxY - minY)) + minY;
-      pipes.push({ x: W + 10, y, scored: false });
-    }
-
-    function flap() {
-      if (gameOver) { reset(); return; }
-      if (!started) started = true;
-      bird.vy = FLAP;
-    }
-
-    cvs.addEventListener('click', flap);
-    cvs.addEventListener('touchstart', function(e){ e.preventDefault(); flap(); }, {passive:false});
-    document.addEventListener('keydown', function(e){ if(e.code==='Space'||e.code==='ArrowUp') flap(); });
-
-    function drawBg() {
-      const grad = ctx.createLinearGradient(0,0,0,H - GROUND_H);
-      grad.addColorStop(0, '#70c5ce');
-      grad.addColorStop(1, '#a8e0e8');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0,0,W,H-GROUND_H);
-    }
-
-    function drawCloud(cx, cy, s) {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.scale(s, s);
-      ctx.fillStyle = 'rgba(255,255,255,0.82)';
-      ctx.beginPath(); ctx.arc(0,0,18,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(22,4,14,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(-18,5,12,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(6,-10,12,0,Math.PI*2); ctx.fill();
-      ctx.restore();
-    }
-
-    function drawGround(offset) {
-      const g = H - GROUND_H;
-      ctx.fillStyle = COLORS.ground;
-      ctx.fillRect(0, g, W, GROUND_H);
-      ctx.fillStyle = COLORS.groundLine;
-      ctx.fillRect(0, g, W, 5);
-      ctx.fillStyle = '#c8b85a';
-      for(let i=0;i<8;i++){
-        const bx = ((i*40 - offset) % (W+40) + W+40) % (W+40);
-        ctx.fillRect(bx, g+8, 30, 4);
-      }
-    }
-
-    function drawPipe(px, py) {
-      const capH = 14, capExtra = 5;
-      const pipeBottom = py + 320;
-      const topPipeEnd = py + 320 - GAP/2;
-      const botPipeStart = py + 320 + GAP/2;
-
-      ctx.fillStyle = COLORS.pipe;
-      ctx.strokeStyle = COLORS.pipeDark;
-      ctx.lineWidth = 1.5;
-
-      ctx.beginPath();
-      ctx.rect(px, 0, PIPE_W, topPipeEnd - capH);
-      ctx.fill(); ctx.stroke();
-
-      ctx.fillStyle = COLORS.pipeCap;
-      ctx.beginPath();
-      ctx.rect(px - capExtra, topPipeEnd - capH, PIPE_W + capExtra*2, capH);
-      ctx.fill(); ctx.stroke();
-
-      ctx.fillStyle = COLORS.pipe;
-      ctx.beginPath();
-      ctx.rect(px, botPipeStart + capH, PIPE_W, H - GROUND_H - botPipeStart - capH);
-      ctx.fill(); ctx.stroke();
-
-      ctx.fillStyle = COLORS.pipeCap;
-      ctx.beginPath();
-      ctx.rect(px - capExtra, botPipeStart, PIPE_W + capExtra*2, capH);
-      ctx.fill(); ctx.stroke();
-
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      ctx.fillRect(px+4, 0, 6, topPipeEnd - capH);
-      ctx.fillRect(px+4, botPipeStart + capH, 6, H - GROUND_H - botPipeStart - capH);
-    }
-
-    function drawBird() {
-      const bx = BIRD_X, by = bird.y;
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(bird.rot);
-
-      const wing = Math.sin(bird.wingAngle) * 5;
-
-      ctx.fillStyle = COLORS.birdWing;
-      ctx.beginPath();
-      ctx.ellipse(-4, 4 + wing, 9, 5, 0.3, 0, Math.PI*2);
-      ctx.fill();
-
-      ctx.fillStyle = COLORS.bird;
-      ctx.beginPath();
-      ctx.arc(0, 0, BIRD_R, 0, Math.PI*2);
-      ctx.fill();
-
-      ctx.strokeStyle = '#d4a800';
-      ctx.lineWidth = 1.2;
-      ctx.stroke();
-
-      ctx.fillStyle = COLORS.birdEye;
-      ctx.beginPath(); ctx.arc(5, -4, 5, 0, Math.PI*2); ctx.fill();
-      ctx.fillStyle = COLORS.birdPupil;
-      ctx.beginPath(); ctx.arc(6, -4, 2.8, 0, Math.PI*2); ctx.fill();
-
-      ctx.fillStyle = COLORS.birdBeak;
-      ctx.beginPath();
-      ctx.moveTo(13, -1); ctx.lineTo(20, -4); ctx.lineTo(20, 1); ctx.closePath();
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    function drawScore() {
+  bricks.forEach(b => {
+    if (!b.alive) return;
+    const c = b.hp === b.maxHp ? b.color : b.scolor;
+    drawRoundRect(b.x, b.y, b.w, b.h, 3, c);
+    if (b.maxHp > 1) {
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.font = '9px monospace';
       ctx.textAlign = 'center';
-      ctx.font = 'bold 36px Verdana, sans-serif';
-      ctx.fillStyle = COLORS.scoreShadow;
-      ctx.fillText(score, W/2+2, 52);
-      ctx.fillStyle = COLORS.score;
-      ctx.fillText(score, W/2, 50);
+      ctx.fillText(b.hp, b.x + b.w/2, b.y + b.h/2 + 3);
     }
+  });
 
-    function drawOverlay(text, sub) {
-      ctx.fillStyle = COLORS.overlay;
-      ctx.fillRect(0, 0, W, H);
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 28px Verdana, sans-serif';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(text, W/2, H/2 - 30);
-      ctx.font = '15px Verdana, sans-serif';
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.fillText(sub, W/2, H/2 + 10);
-      ctx.font = 'bold 15px Verdana, sans-serif';
-      ctx.fillStyle = '#f5d027';
-      ctx.fillText('Best: ' + hiScore, W/2, H/2 + 38);
+  drawRoundRect(paddle.x, PADDLE_Y, PADDLE_W, PADDLE_H, 5, paddleColor);
+
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, BALL_R, 0, Math.PI*2);
+  ctx.fillStyle = ballColor;
+  ctx.fill();
+
+  particles.forEach(p => {
+    ctx.globalAlpha = p.life;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3*p.life, 0, Math.PI*2);
+    ctx.fillStyle = p.color;
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  if (state === 'over') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = '500 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', W/2, H/2 - 16);
+    ctx.font = '13px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('Score: ' + score + '  —  Tap or Space to restart', W/2, H/2 + 14);
+  }
+
+  if (state === 'win') {
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#5DCAA5';
+    ctx.font = '500 22px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('YOU WIN!', W/2, H/2 - 16);
+    ctx.font = '13px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('Score: ' + score + '  —  Tap or Space for next level', W/2, H/2 + 14);
+  }
+}
+
+function update() {
+  if (!ball.active) return;
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  if (ball.x - BALL_R < 0) { ball.x = BALL_R; ball.dx = Math.abs(ball.dx); soundWall(); }
+  if (ball.x + BALL_R > W) { ball.x = W - BALL_R; ball.dx = -Math.abs(ball.dx); soundWall(); }
+  if (ball.y - BALL_R < 0) { ball.y = BALL_R; ball.dy = Math.abs(ball.dy); soundWall(); }
+
+  if (ball.y + BALL_R > PADDLE_Y && ball.y + BALL_R < PADDLE_Y + PADDLE_H + 4 &&
+      ball.x > paddle.x - 4 && ball.x < paddle.x + PADDLE_W + 4) {
+    ball.y = PADDLE_Y - BALL_R;
+    const hit = (ball.x - (paddle.x + PADDLE_W/2)) / (PADDLE_W/2);
+    const angle = hit * 1.1;
+    const speed = Math.sqrt(ball.dx**2 + ball.dy**2);
+    ball.dx = Math.sin(angle) * speed;
+    ball.dy = -Math.abs(Math.cos(angle) * speed);
+    soundPaddle();
+  }
+
+  if (ball.y > H + 20) {
+    lives--;
+    updateHUD();
+    soundLoseLife();
+    if (lives <= 0) {
+      state = 'over';
+      document.getElementById('msg').textContent = '';
+      ball.active = false;
+      soundGameOver();
+    } else {
+      resetBall();
+      state = 'ready';
+      document.getElementById('msg').textContent = 'Tap or Space to launch';
     }
+    return;
+  }
 
-    function drawStart() {
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 20px Verdana, sans-serif';
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillText('Tap / Space to start', W/2+1, H/2 + 61);
-      ctx.fillStyle = '#fff';
-      ctx.fillText('Tap / Space to start', W/2, H/2 + 60);
-    }
-
-    let groundOffset = 0;
-
-    function loop() {
-      frame++;
-      ctx.clearRect(0,0,W,H);
-      drawBg();
-
-      for(let c of clouds) {
-        drawCloud(c.x, c.y, c.s);
-        if(started && !gameOver) c.x -= 0.35 * c.s;
-        if(c.x < -60) c.x = W + 60;
-      }
-
-      if(started && !gameOver) {
-        bird.vy += GRAVITY;
-        bird.y += bird.vy;
-        bird.rot = Math.max(-0.5, Math.min(Math.PI/2.2, bird.vy * 0.065));
-        bird.wingAngle += 0.22;
-        groundOffset = (groundOffset + PIPE_SPEED) % 40;
-
-        if(frame % 75 === 0) addPipe();
-
-        for(let p of pipes) {
-          p.x -= PIPE_SPEED;
-          const cy = p.y + 320;
-          const topEnd = cy - GAP/2;
-          const botStart = cy + GAP/2;
-
-          const bLeft = BIRD_X - BIRD_R + 4;
-          const bRight = BIRD_X + BIRD_R - 2;
-          const bTop = bird.y - BIRD_R + 4;
-          const bBot = bird.y + BIRD_R - 4;
-
-          if(bRight > p.x && bLeft < p.x + PIPE_W) {
-            if(bTop < topEnd || bBot > botStart) {
-              endGame(); return;
-            }
-          }
-          if(!p.scored && p.x + PIPE_W < BIRD_X) {
-            p.scored = true; score++;
-          }
-        }
-        pipes = pipes.filter(p => p.x > -60);
-
-        if(bird.y + BIRD_R > H - GROUND_H) {
-          bird.y = H - GROUND_H - BIRD_R;
-          endGame(); return;
-        }
-        if(bird.y - BIRD_R < 0) {
-          bird.y = BIRD_R;
-          bird.vy = 0;
-        }
+  for (let b of bricks) {
+    if (!b.alive) continue;
+    if (ball.x + BALL_R > b.x && ball.x - BALL_R < b.x + b.w &&
+        ball.y + BALL_R > b.y && ball.y - BALL_R < b.y + b.h) {
+      b.hp--;
+      if (b.hp <= 0) {
+        b.alive = false;
+        score += 10 * level;
+        spawnParticles(b.x + b.w/2, b.y + b.h/2, b.color);
+        soundBrickBreak();
       } else {
-        bird.wingAngle += 0.12;
-        if(!started) {
-          bird.y = H/2 - 30 + Math.sin(frame * 0.05) * 6;
-        }
+        score += 5 * level;
+        soundBrickHit();
       }
-
-      for(let p of pipes) drawPipe(p.x, p.y);
-
-      drawGround(groundOffset);
-      drawBird();
-
-      if(started) drawScore();
-      if(!started) drawStart();
-      if(gameOver) drawOverlay('Game Over', 'Score: ' + score);
-
-      animId = requestAnimationFrame(loop);
+      updateHUD();
+      const overlapL = ball.x + BALL_R - b.x;
+      const overlapR = b.x + b.w - (ball.x - BALL_R);
+      const overlapT = ball.y + BALL_R - b.y;
+      const overlapB = b.y + b.h - (ball.y - BALL_R);
+      const minH = Math.min(overlapL, overlapR);
+      const minV = Math.min(overlapT, overlapB);
+      if (minH < minV) ball.dx = -ball.dx;
+      else ball.dy = -ball.dy;
+      break;
     }
+  }
 
-    function endGame() {
-      gameOver = true;
-      if(score > hiScore) hiScore = score;
-      loop();
-      cancelAnimationFrame(animId);
-      drawOverlay('Game Over', 'Score: ' + score);
-      cvs.addEventListener('click', restart, {once:true});
-      cvs.addEventListener('touchstart', restart, {once:true, passive:false});
-      document.addEventListener('keydown', restartKey, {once:true});
-    }
+  particles.forEach(p => {
+    p.x += p.dx; p.y += p.dy;
+    p.dy += 0.08;
+    p.life -= 0.04;
+  });
+  particles = particles.filter(p => p.life > 0);
 
-    function restart(e) { if(e && e.preventDefault) e.preventDefault(); reset(); cancelAnimationFrame(animId); animId = requestAnimationFrame(loop); }
-    function restartKey(e) { if(e.code==='Space'||e.code==='ArrowUp') restart(); }
+  const alive = bricks.filter(b => b.alive).length;
+  if (alive === 0) {
+    ball.active = false;
+    state = 'win';
+    document.getElementById('msg').textContent = '';
+    soundWin();
+  }
+}
 
-    reset();
-    animId = requestAnimationFrame(loop);
-  })();
-  </script>
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// Mouse control
+canvas.addEventListener('mousemove', e => {
+  const rect = canvas.getBoundingClientRect();
+  const mx = (e.clientX - rect.left) / scale;
+  paddle.x = Math.max(0, Math.min(W - PADDLE_W, mx - PADDLE_W/2));
+  if (!ball.active && state === 'ready') ball.x = paddle.x + PADDLE_W/2;
+});
+
+// Touch control — drag moves paddle; tap launches
+let lastTouchX = null;
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const tx = (e.touches[0].clientX - rect.left) / scale;
+  lastTouchX = tx;
+  paddle.x = Math.max(0, Math.min(W - PADDLE_W, tx - PADDLE_W/2));
+  if (!ball.active && state === 'ready') ball.x = paddle.x + PADDLE_W/2;
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const rect = canvas.getBoundingClientRect();
+  const tx = (e.touches[0].clientX - rect.left) / scale;
+  paddle.x = Math.max(0, Math.min(W - PADDLE_W, tx - PADDLE_W/2));
+  if (!ball.active && state === 'ready') ball.x = paddle.x + PADDLE_W/2;
+  lastTouchX = tx;
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  // Treat tap (no significant movement) as action
+  action();
+}, { passive: false });
+
+function action() {
+  if (state === 'ready') { launchBall(); document.getElementById('msg').textContent = ''; }
+  else if (state === 'over') { lives = 3; score = 0; level = 1; updateHUD(); reset(); }
+  else if (state === 'win') { level++; updateHUD(); reset(); }
+}
+
+canvas.addEventListener('click', action);
+document.addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); action(); } });
+
+const soundBtn = document.getElementById('sound-btn');
+soundBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  soundOn = !soundOn;
+  soundBtn.textContent = soundOn ? '🔊 Sound ON' : '🔇 Sound OFF';
+});
+
+init();
+loop();
+</script>
 </body>
 </html>
